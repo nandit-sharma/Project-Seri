@@ -103,7 +103,8 @@ while True:
     pos1 = find_target(TARGET1, CONFIDENCE)
 
     if pos1:
-        # pyautogui.click(pos1)
+        pyautogui.click(pos1)
+
         print("target1 found and clicked:", pos1)
     else:
         print("target1 not found -> going to step 2")
