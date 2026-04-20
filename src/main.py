@@ -12,7 +12,7 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
 
@@ -25,16 +25,16 @@ TARGET4 = resource_path("assets/target4.png")
 CAUTION1 = resource_path("assets/caution1.png")
 CAUTION2 = resource_path("assets/caution2.png")
 CAUTION3 = resource_path("assets/caution3.png")
+CAUTION4 = resource_path("assets/caution4.png")
 
 
 # ---------------- SETTINGS ----------------
 CONFIDENCE = 0.8
-CAUTION_CONFIDENCE = 0.88      # 🔥 increase for cautions
-TARGET4_CONFIDENCE = 0.88      # 🔥 increase for target4
+CAUTION_CONFIDENCE = 0.88
+TARGET4_CONFIDENCE = 0.88
 START_DELAY = 5
 WAIT_IF_FAIL = 5
 STEP2_FIX_COOLDOWN = 10
-
 
 running = False
 last_step2_fix_time = 0
@@ -76,7 +76,7 @@ def click_target4(reason=""):
     if pos4:
         pyautogui.click(pos4)
         print(f"target4 clicked {reason}: {pos4}\n")
-        time.sleep(0.3)   # 🔥 give UI time to update
+        time.sleep(0.3)
         return True
     else:
         print("target4 not found while trying to click.\n")
@@ -101,25 +101,23 @@ while True:
         continue
 
     # ==================================================
-    # 🔥 PRIORITY CHECK (CAUTION3 must override everything)
+    # 🔥 PRIORITY CHECKS (override everything)
     # ==================================================
-    caution3_pos = find_target(CAUTION3, CAUTION_CONFIDENCE)
-    if caution3_pos:
+
+    if find_target(CAUTION3, CAUTION_CONFIDENCE):
         print("CAUTION3 detected! Clicking target4 (priority override).")
         click_target4("(due to CAUTION3)")
         continue
 
-    # ---------------- CAUTION2 CHECK ----------------
-    caution2_pos = find_target(CAUTION2, CAUTION_CONFIDENCE)
-    if caution2_pos:
+    if find_target(CAUTION4, CAUTION_CONFIDENCE):
+        print("CAUTION4 detected! Clicking target4 (priority override).")
+        click_target4("(due to CAUTION4)")
+        continue
+
+    if find_target(CAUTION2, CAUTION_CONFIDENCE):
         print("CAUTION2 detected! Clicking target4...")
-        clicked = click_target4("(due to CAUTION2)")
-        if clicked:
-            continue
-        else:
-            # if target4 not found, wait a bit before continuing steps
-            smart_sleep(1)
-            continue
+        click_target4("(due to CAUTION2)")
+        continue
 
     # ---------------- STEP 1 ----------------
     pos1 = find_target(TARGET1, CONFIDENCE)
@@ -134,10 +132,25 @@ while True:
     if not running:
         continue
 
-    # AGAIN CHECK CAUTION3 BEFORE NEXT STEP
+    # AGAIN CHECK ALL DANGERS BEFORE STEP2
     if find_target(CAUTION3, CAUTION_CONFIDENCE):
         print("CAUTION3 detected after step1! Clicking target4.")
         click_target4("(due to CAUTION3)")
+        continue
+
+    if find_target(CAUTION4, CAUTION_CONFIDENCE):
+        print("CAUTION4 detected after step1! Clicking target4.")
+        click_target4("(due to CAUTION4)")
+        continue
+
+    if find_target(CAUTION2, CAUTION_CONFIDENCE):
+        print("CAUTION2 detected after step1! Clicking target4.")
+        click_target4("(due to CAUTION2)")
+        continue
+
+    if find_target(TARGET3, CONFIDENCE):
+        print("target3 detected after step1! Clicking target4.")
+        click_target4("(due to target3)")
         continue
 
     # ---------------- STEP 2 ----------------
@@ -165,9 +178,28 @@ while True:
             if not running:
                 break
 
+            # DO NOT CLICK TARGET2 IF ANY DANGER APPEARS
             if find_target(CAUTION3, CAUTION_CONFIDENCE):
                 print("CAUTION3 detected during step2 retry! Clicking target4.")
                 click_target4("(due to CAUTION3)")
+                pos2 = None
+                break
+
+            if find_target(CAUTION4, CAUTION_CONFIDENCE):
+                print("CAUTION4 detected during step2 retry! Clicking target4.")
+                click_target4("(due to CAUTION4)")
+                pos2 = None
+                break
+
+            if find_target(CAUTION2, CAUTION_CONFIDENCE):
+                print("CAUTION2 detected during step2 retry! Clicking target4.")
+                click_target4("(due to CAUTION2)")
+                pos2 = None
+                break
+
+            if find_target(TARGET3, CONFIDENCE):
+                print("target3 detected during step2 retry! Clicking target4.")
+                click_target4("(due to target3)")
                 pos2 = None
                 break
 
@@ -189,9 +221,25 @@ while True:
             if not smart_sleep(0.5):
                 continue
 
+            # CHECK AGAIN AFTER FORCE CLICK
             if find_target(CAUTION3, CAUTION_CONFIDENCE):
                 print("CAUTION3 detected after force click! Clicking target4.")
                 click_target4("(due to CAUTION3)")
+                continue
+
+            if find_target(CAUTION4, CAUTION_CONFIDENCE):
+                print("CAUTION4 detected after force click! Clicking target4.")
+                click_target4("(due to CAUTION4)")
+                continue
+
+            if find_target(CAUTION2, CAUTION_CONFIDENCE):
+                print("CAUTION2 detected after force click! Clicking target4.")
+                click_target4("(due to CAUTION2)")
+                continue
+
+            if find_target(TARGET3, CONFIDENCE):
+                print("target3 detected after force click! Clicking target4.")
+                click_target4("(due to target3)")
                 continue
 
             pos2 = find_target(TARGET2, CONFIDENCE)
@@ -210,11 +258,6 @@ while True:
     if not running:
         continue
 
-    if find_target(CAUTION3, CAUTION_CONFIDENCE):
-        print("CAUTION3 detected before step3! Clicking target4.")
-        click_target4("(due to CAUTION3)")
-        continue
-
     # ---------------- STEP 3 ----------------
     pos3 = find_target(TARGET3, CONFIDENCE)
 
@@ -228,11 +271,6 @@ while True:
     print("target3 not found -> going to step 4")
 
     if not running:
-        continue
-
-    if find_target(CAUTION3, CAUTION_CONFIDENCE):
-        print("CAUTION3 detected before step4! Clicking target4.")
-        click_target4("(due to CAUTION3)")
         continue
 
     # ---------------- STEP 4 ----------------
