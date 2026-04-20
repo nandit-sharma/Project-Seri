@@ -24,11 +24,13 @@ TARGET4 = resource_path("assets/target4.png")
 
 CAUTION1 = resource_path("assets/caution1.png")
 CAUTION2 = resource_path("assets/caution2.png")
-CAUTION3 = resource_path("assets/caution3.png")   # <-- ADD THIS
+CAUTION3 = resource_path("assets/caution3.png")
 
 
 # ---------------- SETTINGS ----------------
 CONFIDENCE = 0.8
+CAUTION_CONFIDENCE = 0.88      # 🔥 increase for cautions
+TARGET4_CONFIDENCE = 0.88      # 🔥 increase for target4
 START_DELAY = 5
 WAIT_IF_FAIL = 5
 STEP2_FIX_COOLDOWN = 10
@@ -69,10 +71,12 @@ def smart_sleep(seconds):
 
 def click_target4(reason=""):
     """Safely click target4 if found"""
-    pos4 = find_target(TARGET4, CONFIDENCE)
+    pos4 = find_target(TARGET4, TARGET4_CONFIDENCE)
+
     if pos4:
         pyautogui.click(pos4)
         print(f"target4 clicked {reason}: {pos4}\n")
+        time.sleep(0.3)   # 🔥 give UI time to update
         return True
     else:
         print("target4 not found while trying to click.\n")
@@ -99,16 +103,23 @@ while True:
     # ==================================================
     # 🔥 PRIORITY CHECK (CAUTION3 must override everything)
     # ==================================================
-    if find_target(CAUTION3, CONFIDENCE):
+    caution3_pos = find_target(CAUTION3, CAUTION_CONFIDENCE)
+    if caution3_pos:
         print("CAUTION3 detected! Clicking target4 (priority override).")
         click_target4("(due to CAUTION3)")
         continue
 
     # ---------------- CAUTION2 CHECK ----------------
-    if find_target(CAUTION2, CONFIDENCE):
+    caution2_pos = find_target(CAUTION2, CAUTION_CONFIDENCE)
+    if caution2_pos:
         print("CAUTION2 detected! Clicking target4...")
-        click_target4("(due to CAUTION2)")
-        continue
+        clicked = click_target4("(due to CAUTION2)")
+        if clicked:
+            continue
+        else:
+            # if target4 not found, wait a bit before continuing steps
+            smart_sleep(1)
+            continue
 
     # ---------------- STEP 1 ----------------
     pos1 = find_target(TARGET1, CONFIDENCE)
@@ -116,16 +127,15 @@ while True:
     if pos1:
         pyautogui.click(pos1)
         print("target1 found and clicked:", pos1)
+        time.sleep(0.3)
     else:
         print("target1 not found -> going to step 2")
 
     if not running:
         continue
 
-    # ==================================================
     # AGAIN CHECK CAUTION3 BEFORE NEXT STEP
-    # ==================================================
-    if find_target(CAUTION3, CONFIDENCE):
+    if find_target(CAUTION3, CAUTION_CONFIDENCE):
         print("CAUTION3 detected after step1! Clicking target4.")
         click_target4("(due to CAUTION3)")
         continue
@@ -137,6 +147,7 @@ while True:
         pyautogui.click(pos2)
         print("target2 found and clicked:", pos2)
         print("Restarting session...\n")
+        time.sleep(0.3)
         continue
 
     print("target2 not found.")
@@ -154,8 +165,7 @@ while True:
             if not running:
                 break
 
-            # CAUTION3 priority during retry too
-            if find_target(CAUTION3, CONFIDENCE):
+            if find_target(CAUTION3, CAUTION_CONFIDENCE):
                 print("CAUTION3 detected during step2 retry! Clicking target4.")
                 click_target4("(due to CAUTION3)")
                 pos2 = None
@@ -166,6 +176,7 @@ while True:
                 pyautogui.click(pos2)
                 print("target2 found in retry and clicked:", pos2)
                 print("Restarting session...\n")
+                time.sleep(0.3)
                 break
 
             time.sleep(0.2)
@@ -178,7 +189,7 @@ while True:
             if not smart_sleep(0.5):
                 continue
 
-            if find_target(CAUTION3, CONFIDENCE):
+            if find_target(CAUTION3, CAUTION_CONFIDENCE):
                 print("CAUTION3 detected after force click! Clicking target4.")
                 click_target4("(due to CAUTION3)")
                 continue
@@ -188,6 +199,7 @@ while True:
                 pyautogui.click(pos2)
                 print("target2 found after force click. Clicked:", pos2)
                 print("Restarting session...\n")
+                time.sleep(0.3)
                 continue
 
     else:
@@ -198,10 +210,7 @@ while True:
     if not running:
         continue
 
-    # ==================================================
-    # CAUTION3 PRIORITY BEFORE STEP3
-    # ==================================================
-    if find_target(CAUTION3, CONFIDENCE):
+    if find_target(CAUTION3, CAUTION_CONFIDENCE):
         print("CAUTION3 detected before step3! Clicking target4.")
         click_target4("(due to CAUTION3)")
         continue
@@ -213,6 +222,7 @@ while True:
         pyautogui.click(pos3)
         print("target3 found and clicked:", pos3)
         print("Restarting session...\n")
+        time.sleep(0.3)
         continue
 
     print("target3 not found -> going to step 4")
@@ -220,19 +230,16 @@ while True:
     if not running:
         continue
 
-    # ==================================================
-    # CAUTION3 PRIORITY BEFORE STEP4
-    # ==================================================
-    if find_target(CAUTION3, CONFIDENCE):
+    if find_target(CAUTION3, CAUTION_CONFIDENCE):
         print("CAUTION3 detected before step4! Clicking target4.")
         click_target4("(due to CAUTION3)")
         continue
 
     # ---------------- STEP 4 ----------------
-    pos4 = find_target(TARGET4, CONFIDENCE)
+    pos4 = find_target(TARGET4, TARGET4_CONFIDENCE)
 
     if pos4:
-        caution = find_target(CAUTION1, CONFIDENCE)
+        caution = find_target(CAUTION1, CAUTION_CONFIDENCE)
 
         if caution:
             print("CAUTION1 detected! Skipping target4 click.")
@@ -243,6 +250,7 @@ while True:
         pyautogui.click(pos4)
         print("target4 found and clicked:", pos4)
         print("Restarting session...\n")
+        time.sleep(0.3)
         continue
 
     # ---------------- FAIL CASE ----------------
